@@ -1,4 +1,4 @@
-import { Server, Model, Factory } from "miragejs";
+import { Server, Model, Factory, Response } from "miragejs";
 
 export function makeServer({ environment = "development" } = {}) {
   let server = new Server({
@@ -26,16 +26,14 @@ export function makeServer({ environment = "development" } = {}) {
 
     routes() {
       this.namespace = "api";
-      this.timing = 750;
+      this.timing = 2000;
 
       this.get("/todos", ({ db }) => {
         return db.todos;
       });
 
       this.patch("/todos/:id", (schema, request) => {
-        let todo = JSON.parse(request.requestBody);
-
-        return schema.db.todos.update(todo.id, todo);
+        return new Response(500);
       });
 
       this.post("/todos", (schema, request) => {
