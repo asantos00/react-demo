@@ -14,36 +14,12 @@ const useIsMountedRef = () => {
 
 let tempIdCounter = 1;
 
-function useRequestManager() {
-  let [pendingRequestIds, setPendingRequestIds] = useState([]);
-
-  function create() {
-    const requestId = Symbol();
-    setPendingRequestIds([...pendingRequestIds, requestId]);
-
-    return {
-      done() {
-        setPendingRequestIds(pendingRequestIds =>
-          pendingRequestIds.filter(id => id !== requestId)
-        );
-      }
-    };
-  }
-
-  return {
-    create,
-    hasPendingRequests: pendingRequestIds.length > 0
-  };
-}
-
 export default function Todos() {
-  let manager = useRequestManager();
   let [todos, setTodos] = useState([]);
-  let [isLoading, setIsLoading] = useState(true);
   let isMountedRef = useIsMountedRef();
   let [newTodoRef, setNewTodoRef] = useRefState({ text: "", isDone: false });
 
-  let isSaving = manager.hasPendingRequests;
+  let isSaving = false;
   let done = todos.filter(todo => todo.isDone).length;
 
   async function createTodo(event) {
@@ -55,11 +31,7 @@ export default function Todos() {
     setTodos(latestTodos);
     setNewTodoRef({ text: "", isDone: false });
 
-    let request = manager.create();
-    let json = await fetch("/api/todos", {
-      method: "POST",
-      body: JSON.stringify(newTodo)
-    }).then(res => res.json());
+    let json = { id: tempIdCounter, ...newTodo };
 
     if (isMountedRef.current) {
       // Update client side cache with record from server
@@ -67,13 +39,10 @@ export default function Todos() {
       setTodos(todos => {
         return todos.map((oldTodo, i) => (i === index ? json : oldTodo));
       });
-
-      request.done();
     }
   }
 
   async function saveTodo(todo) {
-    let request = manager.create();
     let index = todos.findIndex(t => t.id === todo.id);
     setTodos(
       todos.map((oldTodo, i) => {
@@ -84,33 +53,12 @@ export default function Todos() {
         return oldTodo;
       })
     );
-
-    await fetch(`/api/todos/${todo.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(todo)
-    });
-
-    if (isMountedRef.current) {
-      request.done();
-    }
   }
 
   async function deleteCompleted() {
-    let request = manager.create();
-    let completedTodos = todos.filter(t => t.isDone);
     let remainingTodos = todos.filter(t => !t.isDone);
 
     setTodos(remainingTodos);
-
-    await Promise.all(
-      completedTodos.map(todo =>
-        fetch(`/api/todos/${todo.id}`, { method: "DELETE" })
-      )
-    );
-
-    if (isMountedRef.current) {
-      request.done();
-    }
   }
 
   function handleChange(event) {
@@ -118,14 +66,9 @@ export default function Todos() {
   }
 
   useEffect(() => {
-    fetch("/api/todos")
-      .then(res => res.json())
-      .then(json => {
-        if (isMountedRef.current) {
-          setTodos(json);
-          setIsLoading(false);
-        }
-      });
+    setTodos([
+      { isDone: false, text: 'My cool TODO', id: 1 }
+    ])
   }, [isMountedRef]);
 
   return (
@@ -147,11 +90,6 @@ export default function Todos() {
       </div>
 
       <div className="mt-6">
-        {isLoading ? (
-          <p className="px-3 text-gray-500" data-testid="loading">
-            Loading...
-          </p>
-        ) : (
           <div>
             <div className="px-3">
               <form onSubmit={createTodo} data-testid="new-todo-form">
@@ -196,7 +134,6 @@ export default function Todos() {
               ) : null}
             </div>
           </div>
-        )}
       </div>
     </div>
   );
