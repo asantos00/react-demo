@@ -1,6 +1,50 @@
-import { Server, Model, Factory } from "miragejs";
-
 export function makeServer({ environment = "development" } = {}) {
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+  NOTES: add mirage
+
+  import { Server, Model, Factory, Response } from "miragejs";
+
   let server = new Server({
     environment,
 

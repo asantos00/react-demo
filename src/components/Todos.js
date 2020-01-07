@@ -16,23 +16,29 @@ let tempIdCounter = 1;
 
 function useRequestManager() {
   let [pendingRequestIds, setPendingRequestIds] = useState([]);
+  let [hasError, setHasError] = useState(false);
 
   function create() {
     const requestId = Symbol();
     setPendingRequestIds([...pendingRequestIds, requestId]);
+    setHasError(false);
 
     return {
       done() {
         setPendingRequestIds(pendingRequestIds =>
           pendingRequestIds.filter(id => id !== requestId)
         );
+      },
+      error() {
+        setHasError(true);
       }
     };
   }
 
   return {
     create,
-    hasPendingRequests: pendingRequestIds.length > 0
+    hasPendingRequests: pendingRequestIds.length > 0,
+    hasError
   };
 }
 
@@ -44,6 +50,8 @@ export default function Todos() {
   let [newTodoRef, setNewTodoRef] = useRefState({ text: "", isDone: false });
 
   let isSaving = manager.hasPendingRequests;
+  let hasError = manager.hasError;
+
   let done = todos.filter(todo => todo.isDone).length;
 
   async function createTodo(event) {
@@ -59,7 +67,11 @@ export default function Todos() {
     let json = await fetch("/api/todos", {
       method: "POST",
       body: JSON.stringify(newTodo)
-    }).then(res => res.json());
+    })
+      .then(res => res.json())
+      .catch(e => {
+        request.error();
+      });
 
     if (isMountedRef.current) {
       // Update client side cache with record from server
@@ -88,11 +100,18 @@ export default function Todos() {
     await fetch(`/api/todos/${todo.id}`, {
       method: "PATCH",
       body: JSON.stringify(todo)
-    });
-
-    if (isMountedRef.current) {
-      request.done();
-    }
+    })
+      .then(res => {
+        if (res.status > 300) {
+          return Promise.reject(res);
+        }
+      })
+      .catch(e => {
+        request.error();
+      })
+      .finally(() => {
+        request.done();
+      });
   }
 
   async function deleteCompleted() {
@@ -102,15 +121,24 @@ export default function Todos() {
 
     setTodos(remainingTodos);
 
-    await Promise.all(
+    Promise.all(
       completedTodos.map(todo =>
-        fetch(`/api/todos/${todo.id}`, { method: "DELETE" })
+        fetch(`/api/todos/${todo.id}`, { method: "DELETE" }).then(res => {
+          if (res.status > 300) {
+            return Promise.reject(res);
+          }
+        })
       )
-    );
-
-    if (isMountedRef.current) {
-      request.done();
-    }
+    )
+      .catch(e => {
+        console.log(e);
+        request.error();
+      })
+      .finally(() => {
+        if (isMountedRef.current) {
+          request.done();
+        }
+      });
   }
 
   function handleChange(event) {
@@ -118,13 +146,23 @@ export default function Todos() {
   }
 
   useEffect(() => {
+    setIsLoading(true);
     fetch("/api/todos")
+      .then(res => {
+        if (res.status > 300) {
+          return Promise.reject(res);
+        }
+
+        return res;
+      })
       .then(res => res.json())
       .then(json => {
         if (isMountedRef.current) {
           setTodos(json);
-          setIsLoading(false);
         }
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [isMountedRef]);
 
@@ -133,15 +171,25 @@ export default function Todos() {
       <div className="flex items-center justify-between px-3">
         <h1 className="text-2xl font-bold">Todos</h1>
 
-        <div className="text-blue-500">
-          {isSaving && (
+        <div className={hasError ? "text-red-500" : "text-blue-500"}>
+          {hasError ? (
             <svg
               className="w-4 h-4 fill-current"
               viewBox="0 0 20 20"
-              data-testid="saving"
+              data-testid="error"
             >
               <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1z" />
             </svg>
+          ) : (
+            isSaving && (
+              <svg
+                className="w-4 h-4 fill-current"
+                viewBox="0 0 20 20"
+                data-testid="saving"
+              >
+                <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1z" />
+              </svg>
+            )
           )}
         </div>
       </div>
