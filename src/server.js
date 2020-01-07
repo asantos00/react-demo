@@ -26,7 +26,7 @@ export function makeServer({ environment = "development" } = {}) {
 
     routes() {
       this.namespace = "api";
-      this.timing = 2000;
+      this.timing = 4000;
 
       this.get("/todos", ({ db }) => {
         return db.todos;
@@ -43,7 +43,7 @@ export function makeServer({ environment = "development" } = {}) {
       });
 
       this.delete("/todos/:id", (schema, request) => {
-        return schema.db.todos.remove(request.params.id);
+        return new Response(500);
       });
     }
   });
