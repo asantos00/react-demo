@@ -41,6 +41,7 @@ export default function Todos() {
   let [todos, setTodos] = useState([]);
   let isMountedRef = useIsMountedRef();
   let [newTodoRef, setNewTodoRef] = useRefState({ text: "", isDone: false });
+  let [isLoading, setIsLoading] = useState(true);
 
   let done = todos.filter(todo => todo.isDone).length;
 
