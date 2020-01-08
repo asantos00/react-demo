@@ -24,10 +24,10 @@ export function makeServer({ environment = "development" } = {}) {
       server.create("todo", { text: "Do laundry", isDone: false });
     },
 
-    routes() {
-      this.namespace = "api";
-      this.timing = 4000;
+    namespace: 'api',
+    timing: 2000,
 
+    routes() {
       this.get("/todos", ({ db }) => {
         return db.todos;
       });
@@ -37,9 +37,7 @@ export function makeServer({ environment = "development" } = {}) {
       });
 
       this.post("/todos", (schema, request) => {
-        let todo = JSON.parse(request.requestBody);
-
-        return schema.db.todos.insert(todo);
+        return new Response(500);
       });
 
       this.delete("/todos/:id", (schema, request) => {

@@ -59,16 +59,6 @@ export default function Todos() {
       method: "POST",
       body: JSON.stringify(newTodo)
     }).then(res => res.json());
-
-    if (isMountedRef.current) {
-      // Update client side cache with record from server
-      let index = latestTodos.findIndex(todo => todo.id === tempId);
-      setTodos(todos => {
-        return todos.map((oldTodo, i) => (i === index ? json : oldTodo));
-      });
-
-      request.done();
-    }
   }
 
   async function saveTodo(todo) {
