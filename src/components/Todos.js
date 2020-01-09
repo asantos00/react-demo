@@ -98,7 +98,7 @@ export default function Todos() {
       })
     );
 
-    await fetch(`/api/todos/${todo.id}`, {
+    fetch(`/api/todos/${todo.id}`, {
       method: "PATCH",
       body: JSON.stringify(todo)
     })
