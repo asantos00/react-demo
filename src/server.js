@@ -93,7 +93,11 @@ export function makeServer({ environment = "development" } = {}) {
 
 
 /*
-  NOTES: add mirage
+  import {addCaos, caosCases} from 'miragejs-caos';
+  const ServerWithCaos = addCaos(Server, {
+    level: 'high' ,
+    getBreakingCase: () => caosCases.random5XX
+  });
 
   import { Server, Model, Factory, Response } from "miragejs";
 

@@ -46,11 +46,12 @@ export default function Todos() {
   let manager = useRequestManager();
   let [todos, setTodos] = useState([]);
   let [isLoading, setIsLoading] = useState(true);
+  let [getHasError, setHasError] = useState(false);
   let isMountedRef = useIsMountedRef();
   let [newTodoRef, setNewTodoRef] = useRefState({ text: "", isDone: false });
 
   let isSaving = manager.hasPendingRequests;
-  let hasError = manager.hasError;
+  let hasError = manager.hasError || getHasError;
 
   let done = todos.filter(todo => todo.isDone).length;
 
@@ -147,6 +148,7 @@ export default function Todos() {
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     fetch("/api/todos")
       .then(res => {
         if (res.status > 300) {
@@ -160,6 +162,9 @@ export default function Todos() {
         if (isMountedRef.current) {
           setTodos(json);
         }
+      })
+      .catch(() => {
+        setHasError(true);
       })
       .finally(() => {
         setIsLoading(false);
