@@ -25,7 +25,7 @@ export function makeServer({ environment = "development" } = {}) {
     },
 
     namespace: 'api',
-    timing: 2000,
+    timing: 4000,
 
     routes() {
       this.get("/todos", ({ db }) => {
