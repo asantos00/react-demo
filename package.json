@@ -38,9 +38,9 @@
     "@testing-library/user-event": "^7.2.1",
     "cypress": "^3.8.1",
     "eslint-plugin-cypress": "^2.8.1",
-    "prettier": "^1.19.1",
-    "start-server-and-test": "^1.10.6",
     "miragejs": "^0.1.32",
-    "miragejs-caos": "0.0.3"
+    "miragejs-caos": "0.0.4",
+    "prettier": "^1.19.1",
+    "start-server-and-test": "^1.10.6"
   }
 }
